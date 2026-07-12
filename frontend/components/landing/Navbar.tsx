@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { Menu, Truck, X } from "lucide-react";
+import { Menu, Truck, X, Moon } from "lucide-react";
 import { useState } from "react";
+
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
+  const [darkMode, setDarkMode] = useState(false);
   const navLinks = [
     { name: "Features", href: "/#features" },
     { name: "Dashboard", href: "/dashboard" },
@@ -49,19 +50,24 @@ export default function Navbar() {
 
         {/* Desktop Buttons */}
         <div className="hidden items-center gap-4 lg:flex">
-          <Link
-            href="/login"
-            className="rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-medium text-slate-700 transition hover:border-blue-600 hover:text-blue-600"
-          >
-            Login
-          </Link>
+         
+          <div className="flex items-center gap-3">
 
-          <Link
-            href="/register"
-            className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700"
-          >
-            Get Started
-          </Link>
+            <button
+              className="rounded-lg border border-slate-200 p-2 transition hover:bg-slate-100"
+              aria-label="Toggle theme"
+            >
+              <Moon className="h-5 w-5 text-slate-600" />
+            </button>
+
+            <Link
+              href="/login"
+              className="rounded-lg bg-blue-600 px-5 py-2 font-medium text-white transition hover:bg-blue-700"
+            >
+              Login
+            </Link>
+
+          </div>
         </div>
 
         {/* Mobile Button */}
