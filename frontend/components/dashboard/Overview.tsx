@@ -26,7 +26,7 @@ const vehicleStatus = [
 
 export function Overview() {
   return (
-    <div className="p-8 space-y-8 font-sans">
+    <div className="p-8 space-y-8 font-sans text-[#0f172a]">
       {/* Filters */}
       <div className="flex gap-4 mb-8 text-sm">
         <div className="flex flex-col gap-1">
@@ -48,9 +48,9 @@ export function Overview() {
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
         {kpiCards.map((card, idx) => (
-          <div key={idx} className={`bg-transparent border border-[#2a2e37] border-l-4 ${card.color} p-4 flex flex-col justify-center`}>
+          <div key={idx} className={`bg-white border border-[#e2e8f0] border-l-4 ${card.color} p-4 flex flex-col justify-center shadow-sm`}>
             <p className="text-[10px] text-[#8b949e] uppercase tracking-widest mb-1">{card.label}</p>
-            <p className="text-3xl text-white font-semibold">{card.value}</p>
+            <p className="text-3xl text-[#0f172a] font-semibold">{card.value}</p>
           </div>
         ))}
       </div>
@@ -71,7 +71,7 @@ export function Overview() {
                   <th className="pb-3 font-medium">ETA</th>
                 </tr>
               </thead>
-              <tbody className="text-sm text-white">
+              <tbody className="text-sm text-[#0f172a]">
                 {recentTrips.map((trip, idx) => (
                   <tr key={idx} className="border-b border-[#1a1d24]">
                     <td className="py-4">{trip.trip}</td>
