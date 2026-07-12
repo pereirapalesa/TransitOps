@@ -1,5 +1,6 @@
 "use client";
 
+import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertCircle } from "lucide-react";
 import { Controller, useForm } from "react-hook-form";
@@ -14,12 +15,14 @@ import { useLogin } from "@/hooks/useLogin";
 import { loginSchema, type LoginFormValues } from "@/lib/validators/auth";
 
 export function LoginForm() {
+  type LoginFormInput = z.input<typeof loginSchema>;
+
   const {
     register,
     handleSubmit,
     control,
     formState: { errors },
-  } = useForm<LoginFormValues>({
+  } = useForm<LoginFormInput>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "", rememberMe: false },
   });
@@ -30,7 +33,7 @@ export function LoginForm() {
     loginMutation.mutate({
       email: values.email,
       password: values.password,
-      remember_me: values.rememberMe,
+      remember_me: values.rememberMe ?? false,
     });
   });
 
