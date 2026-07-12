@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
 import { QueryProvider } from "@/components/providers/query-provider";
+import { ThemeProvider } from "@/components/providers/theme-provider";
 import { AuthProvider } from "@/lib/auth/auth-context";
 
 import { ThemeProvider } from "@/components/providers/theme-provider";
@@ -31,7 +32,7 @@ const display = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "TransitOps — Sign in",
+  title: "TransitOps — Fleet Operations Platform",
   description: "Fleet operations platform for dispatch, maintenance, and compliance.",
 };
 

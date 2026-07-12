@@ -1,9 +1,30 @@
-import { ReactNode } from "react";
+"use client";
+
+import { useEffect, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
+
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { Topbar } from "@/components/dashboard/Topbar";
-import Navbar from "@/components/landing/Navbar";
+import { useAuth } from "@/lib/auth/auth-context";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
+  const { isAuthenticated, isInitializing } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isInitializing && !isAuthenticated) {
+      router.replace("/");
+    }
+  }, [isInitializing, isAuthenticated, router]);
+
+  if (isInitializing || !isAuthenticated) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <p className="font-mono text-sm text-muted-foreground">Loading your workspace…</p>
+      </div>
+    );
+  }
+
   return (
   <div className="flex flex-col h-screen overflow-hidden bg-[#ffffff]  text-black">
       <Navbar />

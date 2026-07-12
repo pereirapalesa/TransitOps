@@ -2,10 +2,10 @@
 
 /* =========================
    Light Theme
-========================= */
 
 :root {
-  --background: #ffffff;
+  /* Light theme */
+  --background: #f8fafc;
   --foreground: #0f172a;
 
   --card: #ffffff;
@@ -17,7 +17,6 @@
 
 /* =========================
    Dark Theme
-========================= */
 
 .dark {
   --background: #020617; /* slate-950 */
@@ -49,4 +48,30 @@ body {
 
 .text-balance {
   text-wrap: balance;
+}
+
+/* Subtle grid backdrop used behind hero / auth signature panels */
+.bg-grid {
+  background-image:
+    linear-gradient(to right, color-mix(in srgb, var(--border) 60%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--border) 60%, transparent) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(ellipse 80% 60% at 30% 20%, black 40%, transparent 90%);
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+.animate-pulse-dot {
+  animation: pulse-dot 1.8s ease-in-out infinite;
+}
+
+@keyframes truckMove {
+  0% { transform: translateX(0); }
+  50% { transform: translateX(-120px); }
+  100% { transform: translateX(0); }
+}
+.animate-truck {
+  animation: truckMove 6s ease-in-out infinite;
 }

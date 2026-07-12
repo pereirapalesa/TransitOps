@@ -11,109 +11,88 @@ import {
   type ReactNode,
 } from "react";
 
-import { fetchCurrentUser, loginRequest, logoutRequest } from "@/lib/api/auth";
-import {
-  clearSession,
-  extractApiErrorMessage,
-  persistSession,
-  refreshAccessToken,
-  registerAuthFailureHandler,
-} from "@/lib/api/client";
-import { getAccessToken } from "@/lib/auth/access-token-store";
-import { getStoredRefreshToken } from "@/lib/auth/token-storage";
-import type { AuthUser, LoginRequest } from "@/types/auth";
+import type { AuthUser, LoginRequest, RoleName } from "@/types/auth";
+
+const STORAGE_KEY = "transitops.session";
 
 interface AuthContextValue {
   user: AuthUser | null;
-  /** True while the initial silent-refresh-on-load check is in flight. */
   isInitializing: boolean;
   isAuthenticated: boolean;
   login: (payload: LoginRequest) => Promise<void>;
-  logout: () => Promise<void>;
+  logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+function nameFromEmail(email: string): string {
+  const local = email.split("@")[0] ?? "user";
+  return local
+    .split(/[.\-_]/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ") || "Fleet User";
+}
+
+function buildMockUser(email: string, role: RoleName = "Dispatcher"): AuthUser {
+  return {
+    id: "local-user",
+    organization_id: "local-org",
+    full_name: nameFromEmail(email),
+    email,
+    is_active: true,
+    last_login: new Date().toISOString(),
+    role: { id: `role-${role.toLowerCase().replace(/\s+/g, "-")}`, name: role },
+  };
+}
+
+function readStoredUser(): AuthUser | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as AuthUser) : null;
+  } catch {
+    return null;
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [user, setUser] = useState<AuthUser | null>(null);
+  // Session is read synchronously on mount (client-only), so this flips to
+  // false immediately after the first client render reconciles with SSR.
   const [isInitializing, setIsInitializing] = useState(true);
 
-  const logout = useCallback(async () => {
-    const refreshToken = getStoredRefreshToken();
-    try {
-      if (refreshToken) {
-        await logoutRequest(refreshToken);
-      }
-    } catch {
-      // Best-effort server-side revocation — client state is cleared regardless.
-    } finally {
-      clearSession();
-      setUser(null);
-      router.push("/login");
-    }
-  }, [router]);
-
   useEffect(() => {
-    registerAuthFailureHandler(() => {
-      setUser(null);
-      router.push("/login");
-    });
-  }, [router]);
-
-  // On mount: if a refresh token is stored, silently exchange it for a
-  // fresh access token and hydrate the user profile, so a page reload
-  // doesn't force a re-login.
-  useEffect(() => {
-    let cancelled = false;
-
-    async function hydrate() {
-      const refreshToken = getStoredRefreshToken();
-      if (!refreshToken) {
-        setIsInitializing(false);
-        return;
-      }
-
-      try {
-        await refreshAccessToken();
-        const currentUser = await fetchCurrentUser();
-        if (!cancelled) {
-          setUser(currentUser);
-        }
-      } catch {
-        if (!cancelled) {
-          clearSession();
-          setUser(null);
-        }
-      } finally {
-        if (!cancelled) {
-          setIsInitializing(false);
-        }
-      }
-    }
-
-    void hydrate();
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Reading localStorage must happen client-side only (SSR has no
+    // window), so this intentionally hydrates session state in an effect
+    // rather than a lazy useState initializer, to avoid a hydration mismatch.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setUser(readStoredUser());
+    setIsInitializing(false);
   }, []);
 
   const login = useCallback(async (payload: LoginRequest) => {
-    try {
-      const response = await loginRequest(payload);
-      persistSession(response.access_token, response.refresh_token);
-      setUser(response.user);
-    } catch (error) {
-      throw new Error(extractApiErrorMessage(error, "Login failed. Please check your credentials."));
-    }
+    // No backend in this build — any well-formed credentials sign in locally.
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    const mockUser = buildMockUser(payload.email, payload.role);
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(mockUser));
+    setUser(mockUser);
   }, []);
+
+  const logout = useCallback(() => {
+    window.localStorage.removeItem(STORAGE_KEY);
+    setUser(null);
+    router.push("/");
+  }, [router]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
       isInitializing,
-      isAuthenticated: Boolean(user) && Boolean(getAccessToken()),
+      isAuthenticated: Boolean(user),
       login,
       logout,
     }),

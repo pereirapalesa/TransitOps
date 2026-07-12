@@ -1,5 +1,3 @@
-"use client";
-
 import Link from "next/link";
 import { Menu, Truck, X, Moon } from "lucide-react";
 import { useState } from "react";
@@ -16,23 +14,23 @@ export default function Navbar() {
     { name: "Contact", href: "/#contact" },
   ];
 
+export default function Navbar() {
   return (
-    <header className="fixed top-0 left-0 z-50 w-full border-b border-slate-200 bg-white/90 backdrop-blur-md">
-      <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 lg:px-8">
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm">
-            <Truck size={22} />
-          </div>
-
-          <div>
-            <h1 className="text-xl font-bold tracking-tight text-slate-900">
-              TransitOps
-            </h1>
-            <p className="-mt-1 text-xs text-slate-500">
-              Fleet Management ERP
-            </p>
-          </div>
+    <header className="w-full border-b border-border bg-panel">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6 lg:px-10">
+        <Link href="/" className="flex items-center gap-2.5">
+          <span className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/15 text-primary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path
+                d="M3 12h4l2-6h6l2 6h4M6 16h12M8 18.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3ZM16 18.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Z"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </span>
+          <span className="font-mono text-sm uppercase tracking-[0.22em] text-foreground">TransitOps</span>
         </Link>
 
         {/* Desktop Navigation */}
@@ -69,53 +67,7 @@ export default function Navbar() {
 
           </div>
         </div>
-
-        {/* Mobile Button */}
-        <button
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="rounded-lg p-2 transition hover:bg-slate-100 lg:hidden"
-        >
-          {mobileMenuOpen ? (
-            <X className="h-6 w-6 text-slate-700" />
-          ) : (
-            <Menu className="h-6 w-6 text-slate-700" />
-          )}
-        </button>
       </div>
-
-      {/* Mobile Menu */}
-      {mobileMenuOpen && (
-        <div className="border-t border-slate-200 bg-white lg:hidden">
-          <div className="space-y-2 px-6 py-6">
-            {navLinks.map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                onClick={() => setMobileMenuOpen(false)}
-                className="block rounded-lg px-4 py-3 text-slate-700 transition hover:bg-slate-100"
-              >
-                {item.name}
-              </Link>
-            ))}
-
-            <div className="mt-6 flex flex-col gap-3">
-              <Link
-                href="/login"
-                className="rounded-lg border border-slate-300 px-4 py-3 text-center font-medium text-slate-700"
-              >
-                Login
-              </Link>
-
-              <Link
-                href="/register"
-                className="rounded-lg bg-blue-600 px-4 py-3 text-center font-medium text-white"
-              >
-                Get Started
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
     </header>
   );
 }

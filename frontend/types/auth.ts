@@ -2,6 +2,7 @@ export type RoleName =
   | "Admin"
   | "Fleet Manager"
   | "Dispatcher"
+  | "Driver"
   | "Safety Officer"
   | "Financial Analyst";
 
@@ -24,7 +25,16 @@ export interface LoginRequest {
   email: string;
   password: string;
   remember_me?: boolean;
+  role?: RoleName;
 }
+
+/* ---------------------------------------------------------------------
+ * The types below back the real-backend auth flow (lib/api/*, lib/auth/jwt.ts,
+ * token-storage.ts, access-token-store.ts, session-cookie.ts). Nothing in
+ * the app currently imports that flow — the app uses a local mock login
+ * (lib/auth/auth-context.tsx) — but these stay in place, ready to wire up
+ * once a real backend exists.
+ * ------------------------------------------------------------------- */
 
 export interface LoginResponse {
   access_token: string;
@@ -46,8 +56,7 @@ export interface ApiErrorPayload {
 
 /** Shape of the JWT access-token payload, decoded client-side only for
  * expiry checks / role display — never trust this for authorization,
- * the backend re-verifies the signature on every request.
- */
+ * the backend re-verifies the signature on every request. */
 export interface DecodedAccessToken {
   sub: string;
   email: string;

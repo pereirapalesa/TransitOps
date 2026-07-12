@@ -3,7 +3,11 @@
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertCircle } from "lucide-react";
-import { Controller, useForm } from "react-hook-form";
+import {
+  Controller,
+  SubmitHandler,
+  useForm,
+} from "react-hook-form";
 
 import { PasswordInput } from "@/components/auth/PasswordInput";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -11,8 +15,16 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
 import { useLogin } from "@/hooks/useLogin";
-import { loginSchema, type LoginFormValues } from "@/lib/validators/auth";
+import {
+  loginRoleValues,
+  loginSchema,
+  type LoginFormValues,
+} from "@/lib/validators/auth";
+
+export default function LoginForm() {
+  const loginMutation = useLogin();
 
 export function LoginForm() {
   type LoginFormInput = z.input<typeof loginSchema>;
@@ -24,91 +36,135 @@ export function LoginForm() {
     formState: { errors },
   } = useForm<LoginFormInput>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: "", password: "", rememberMe: false },
+    defaultValues: {
+      email: "",
+      password: "",
+      role: undefined,
+      rememberMe: false,
+    },
   });
 
-  const loginMutation = useLogin();
-
-  const onSubmit = handleSubmit((values) => {
+  const onSubmit: SubmitHandler<LoginFormValues> = (data) => {
     loginMutation.mutate({
       email: values.email,
       password: values.password,
       remember_me: values.rememberMe ?? false,
     });
-  });
+  };
 
   return (
-    <form onSubmit={onSubmit} noValidate className="space-y-5">
-      {loginMutation.isError ? (
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      noValidate
+      className="space-y-5"
+    >
+      {loginMutation.isError && (
         <Alert variant="destructive">
-          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+          <AlertCircle className="h-4 w-4" />
           <AlertDescription>
             {loginMutation.error instanceof Error
               ? loginMutation.error.message
               : "Login failed. Please check your credentials."}
           </AlertDescription>
         </Alert>
-      ) : null}
+      )}
 
       <div className="space-y-2">
-        <Label htmlFor="email">Work email</Label>
+        <Label htmlFor="email">Work Email</Label>
+
         <Input
           id="email"
           type="email"
-          autoComplete="email"
           placeholder="you@company.com"
-          aria-invalid={Boolean(errors.email)}
-          aria-describedby={errors.email ? "email-error" : undefined}
+          autoComplete="email"
           {...register("email")}
         />
-        {errors.email ? (
-          <p id="email-error" className="text-xs text-destructive">
+
+        {errors.email && (
+          <p className="text-sm text-destructive">
             {errors.email.message}
           </p>
-        ) : null}
+        )}
       </div>
 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <Label htmlFor="password">Password</Label>
-          <a href="/forgot-password" className="text-xs font-medium text-primary hover:underline">
+
+          <Link
+            href="/forgot-password"
+            className="text-xs text-primary hover:underline"
+          >
             Forgot password?
-          </a>
+          </Link>
         </div>
+
         <PasswordInput
           id="password"
-          autoComplete="current-password"
           placeholder="••••••••"
-          aria-invalid={Boolean(errors.password)}
-          aria-describedby={errors.password ? "password-error" : undefined}
+          autoComplete="current-password"
           {...register("password")}
         />
-        {errors.password ? (
-          <p id="password-error" className="text-xs text-destructive">
+
+        {errors.password && (
+          <p className="text-sm text-destructive">
             {errors.password.message}
           </p>
-        ) : null}
+        )}
       </div>
 
-      <div className="flex items-center gap-2.5">
-        <Controller
-          name="rememberMe"
-          control={control}
-          render={({ field }) => (
+      <div className="space-y-2">
+        <Label htmlFor="role">Role</Label>
+
+        <Select id="role" defaultValue="" {...register("role")} aria-invalid={!!errors.role}>
+          <option value="" disabled>
+            Select your role
+          </option>
+          {loginRoleValues.map((role) => (
+            <option key={role} value={role}>
+              {role}
+            </option>
+          ))}
+        </Select>
+
+        {errors.role && (
+          <p className="text-sm text-destructive">
+            {errors.role.message}
+          </p>
+        )}
+      </div>
+
+      <Controller
+        name="rememberMe"
+        control={control}
+        render={({ field }) => (
+          <div className="flex items-center gap-2">
             <Checkbox
               id="rememberMe"
               checked={field.value}
-              onCheckedChange={(checked) => field.onChange(checked === true)}
+              onCheckedChange={(checked) =>
+                field.onChange(checked === true)
+              }
             />
-          )}
-        />
-        <Label htmlFor="rememberMe" className="cursor-pointer text-sm font-normal text-muted-foreground">
-          Keep me signed in on this device
-        </Label>
-      </div>
 
-      <Button type="submit" size="lg" className="w-full" isLoading={loginMutation.isPending}>
-        {loginMutation.isPending ? "Signing in…" : "Sign in"}
+            <Label
+              htmlFor="rememberMe"
+              className="cursor-pointer font-normal"
+            >
+              Keep me signed in
+            </Label>
+          </div>
+        )}
+      />
+
+      <Button
+        type="submit"
+        className="w-full"
+        disabled={loginMutation.isPending}
+      >
+        {loginMutation.isPending
+          ? "Signing in..."
+          : "Sign In"}
       </Button>
     </form>
   );

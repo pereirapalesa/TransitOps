@@ -1,30 +1,22 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 import { useAuth } from "@/lib/auth/auth-context";
 import type { LoginRequest } from "@/types/auth";
 
-const ROLE_DASHBOARD_FALLBACK = "/dashboard";
-
-/** Wraps AuthContext.login in a React Query mutation so LoginForm gets
- * consistent isPending/error/reset semantics, and handles the post-login
- * redirect (return-to URL if present, otherwise the default dashboard).
- */
+/** Wraps AuthContext.login (a local mock — no backend in this build) in a
+ * React Query mutation so LoginForm gets isPending/error/reset semantics,
+ * and redirects straight to the dashboard on success. */
 export function useLogin() {
   const { login } = useAuth();
   const router = useRouter();
-  const searchParams = useSearchParams();
 
-  const mutation = useMutation({
+  return useMutation({
     mutationFn: (payload: LoginRequest) => login(payload),
     onSuccess: () => {
-      const returnTo = searchParams.get("returnTo");
-      const destination = returnTo && returnTo.startsWith("/") ? returnTo : ROLE_DASHBOARD_FALLBACK;
-      router.push(destination);
+      router.push("/dashboard");
     },
   });
-
-  return mutation;
 }

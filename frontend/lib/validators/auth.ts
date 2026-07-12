@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+export const loginRoleValues = ["Fleet Manager", "Driver", "Safety Officer", "Financial Analyst"] as const;
+
 export const loginSchema = z.object({
   email: z
     .string()
