@@ -1,0 +1,27 @@
+# ---------- Python ----------
+backend/.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# ---------- Next.js ----------
+frontend/node_modules/
+frontend/.next/
+
+# ---------- Environment ----------
+.env
+.env.local
+.env.*.local
+*.env
+!*.env.example
+.venv
+venv
+ENV/
+env/
+
+# ---------- OS ----------
+.DS_Store
+Thumbs.db
+
+# ---------- VS Code ----------
+.vscode/
