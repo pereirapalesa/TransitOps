@@ -7,15 +7,11 @@ from sqlalchemy.orm import sessionmaker
 from app.models.base import Base
 import app.models
 
-load_dotenv()
-
-DATABASE_URL = os.getenv("DATABASE_URL")
+from app.core.config import DATABASE_URL
 
 if not DATABASE_URL:
     raise RuntimeError("DATABASE_URL is not set. Set env var in CI/local env.")
 
-if DATABASE_URL.startswith("postgresql://"):
-    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg://")
 
 def get_engine(url: str = DATABASE_URL):
     return create_engine(url, pool_pre_ping=True)
