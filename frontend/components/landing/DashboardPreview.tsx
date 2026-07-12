@@ -81,13 +81,23 @@ const maintenance = [
   "Tyre Rotation",
 ];
 
-export default function DashboardPreview() {
+export default function DashboardPreview({
+  isAppView = false,
+  userFullName = "",
+  onLogout,
+}: {
+  isAppView?: boolean;
+  userFullName?: string;
+  onLogout?: () => void;
+} = {}) {
   return (
     <section
-      id="modules"
-      className="bg-white py-28"
+      id={!isAppView ? "modules" : undefined}
+      className={isAppView ? "bg-slate-50 min-h-screen" : "bg-white py-28"}
     >
-      <div className="mx-auto max-w-7xl px-6 lg:px-8">
+      <div className={isAppView ? "h-full w-full" : "mx-auto max-w-7xl px-6 lg:px-8"}>
+
+        {!isAppView && (
 
         <div className="text-center">
 
@@ -105,14 +115,16 @@ export default function DashboardPreview() {
           </p>
 
         </div>
+        )}
 
         {/* Window */}
 
-        <div className="mt-20 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl">
+        <div className={isAppView ? "h-screen flex flex-col" : "mt-20 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl"}>
 
           {/* Fake Browser */}
 
-          <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-6 py-4">
+          {!isAppView && (
+            <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-6 py-4">
 
             <div className="flex gap-2">
 
@@ -127,14 +139,14 @@ export default function DashboardPreview() {
             </div>
 
             <div></div>
-
           </div>
+          )}
 
-          <div className="grid lg:grid-cols-12">
+          <div className={isAppView ? "flex-1 grid lg:grid-cols-12 min-h-0" : "grid lg:grid-cols-12"}>
 
             {/* Sidebar */}
 
-            <aside className="hidden bg-slate-900 lg:col-span-3 lg:block">
+            <aside className={isAppView ? "hidden bg-slate-900 lg:col-span-2 xl:col-span-2 lg:flex flex-col h-full overflow-y-auto" : "hidden bg-slate-900 lg:col-span-3 lg:block"}>
 
               <div className="border-b border-slate-800 p-8">
 
@@ -145,10 +157,9 @@ export default function DashboardPreview() {
                 <p className="mt-2 text-sm text-slate-400">
                   Fleet ERP Platform
                 </p>
-
               </div>
 
-              <nav className="space-y-2 p-6">
+              <nav className="space-y-2 p-6 flex-1">
 
                 {[
                   "Dashboard",
@@ -174,11 +185,25 @@ export default function DashboardPreview() {
 
               </nav>
 
+              {isAppView && onLogout && (
+                <div className="p-6 border-t border-slate-800">
+                  <p className="text-sm text-slate-400 mb-4 text-center truncate">
+                    Welcome, {userFullName}
+                  </p>
+                  <button
+                    onClick={onLogout}
+                    className="w-full rounded-xl bg-slate-800 px-5 py-3 text-white transition hover:bg-slate-700"
+                  >
+                    Log out
+                  </button>
+                </div>
+              )}
+
             </aside>
 
             {/* Main */}
 
-            <div className="p-8 lg:col-span-9">
+            <div className={isAppView ? "p-8 lg:col-span-10 xl:col-span-10 h-full overflow-y-auto bg-slate-50" : "p-8 lg:col-span-9"}>
 
               {/* Top */}
 
@@ -720,7 +745,7 @@ export default function DashboardPreview() {
 
                   <div
                     key={item.title}
-                    className="rounded-2xl border border-slate-200 bg-gradient-to-br from-blue-600 to-blue-700 p-6 text-white shadow-lg"
+                    className="rounded-2xl border border-slate-200 bg-linear-to-br from -blue-600 to-blue-700 p-6 text-white shadow-lg"
                   >
 
                     <p className="text-sm text-blue-100">
