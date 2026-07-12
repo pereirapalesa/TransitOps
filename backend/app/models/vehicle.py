@@ -1,6 +1,6 @@
 from datetime import datetime
 from sqlalchemy import String, Float, DateTime, Enum, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
 from app.enums import VehicleStatus
@@ -36,3 +36,7 @@ class Vehicle(Base):
         onupdate=func.now(),
         nullable=False,
     )
+
+    maintenance_logs = relationship("MaintenanceLog", back_populates="vehicle", cascade="all, delete-orphan")
+    fuel_logs = relationship("FuelLog", back_populates="vehicle", cascade="all, delete-orphan")
+    expenses = relationship("Expense", back_populates="vehicle", cascade="all, delete-orphan")

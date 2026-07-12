@@ -52,3 +52,45 @@ def delete_vehicle(db: Session, vehicle_id: int) -> bool:
     db.delete(db_vehicle)
     db.commit()
     return True
+
+from sqlalchemy import func
+from app.models.fuel_log import FuelLog
+from app.models.maintenance import MaintenanceLog
+from app.models.trip import Trip
+from app.enums import TripStatus
+
+def get_vehicle_cost_summary(db: Session, vehicle_id: int) -> dict | None:
+    vehicle = get_vehicle_by_id(db, vehicle_id)
+    if not vehicle:
+        return None
+    fuel_cost = db.query(func.sum(FuelLog.cost)).filter(FuelLog.vehicle_id == vehicle_id).scalar() or 0.0
+    maintenance_cost = db.query(func.sum(MaintenanceLog.cost)).filter(MaintenanceLog.vehicle_id == vehicle_id).scalar() or 0.0
+    return {
+        "fuel_cost": fuel_cost,
+        "maintenance_cost": maintenance_cost,
+        "total_operational_cost": fuel_cost + maintenance_cost
+    }
+
+def get_vehicle_fuel_efficiency(db: Session, vehicle_id: int) -> dict | None:
+    vehicle = get_vehicle_by_id(db, vehicle_id)
+    if not vehicle:
+        return None
+    completed_trips = db.query(Trip).filter(
+        Trip.vehicle_id == vehicle_id,
+        Trip.status == TripStatus.Completed
+    ).all()
+    distance = 0.0
+    for trip in completed_trips:
+        if trip.ending_odometer is not None and trip.starting_odometer is not None:
+            distance += (trip.ending_odometer - trip.starting_odometer)
+        else:
+            distance += trip.planned_distance
+    fuel_consumed = db.query(func.sum(FuelLog.liters)).filter(FuelLog.vehicle_id == vehicle_id).scalar() or 0.0
+    efficiency = 0.0
+    if fuel_consumed > 0:
+        efficiency = distance / fuel_consumed
+    return {
+        "distance": distance,
+        "fuel_consumed": fuel_consumed,
+        "efficiency": efficiency
+    }

@@ -82,3 +82,43 @@ def delete_vehicle(
         )
     return {"message": "Vehicle deleted successfully"}
 
+from pydantic import BaseModel
+
+class VehicleCostSummary(BaseModel):
+    fuel_cost: float
+    maintenance_cost: float
+    total_operational_cost: float
+
+class VehicleFuelEfficiency(BaseModel):
+    distance: float
+    fuel_consumed: float
+    efficiency: float
+
+@router.get("/{vehicle_id}/cost-summary", response_model=VehicleCostSummary)
+def get_vehicle_cost_summary(
+    vehicle_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    summary = vehicle_service.get_vehicle_cost_summary(db, vehicle_id)
+    if summary is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Vehicle not found"
+        )
+    return summary
+
+@router.get("/{vehicle_id}/fuel-efficiency", response_model=VehicleFuelEfficiency)
+def get_vehicle_fuel_efficiency(
+    vehicle_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    efficiency = vehicle_service.get_vehicle_fuel_efficiency(db, vehicle_id)
+    if efficiency is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Vehicle not found"
+        )
+    return efficiency
+
