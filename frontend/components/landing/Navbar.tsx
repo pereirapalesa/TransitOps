@@ -8,11 +8,11 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinks = [
-    { name: "Features", href: "#features" },
-    { name: "Modules", href: "#modules" },
-    { name: "Analytics", href: "#analytics" },
-    { name: "About", href: "#about" },
-    { name: "Contact", href: "#contact" },
+    { name: "Features", href: "/#features" },
+    { name: "Dashboard", href: "/dashboard" },
+    { name: "Analytics", href: "/#analytics" },
+    { name: "About", href: "/#about" },
+    { name: "Contact", href: "/#contact" },
   ];
 
   return (
