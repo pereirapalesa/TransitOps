@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from app.db import db_ping
 
 app = FastAPI(title="TransitOps API")
 
@@ -9,4 +10,4 @@ def root():
 
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    return {"status": "ok", "database": db_ping()}
