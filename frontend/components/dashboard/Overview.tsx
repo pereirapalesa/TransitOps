@@ -1,48 +1,124 @@
 "use client";
 
-const kpiCards = [
-  { label: "Active Vehicles", value: "53", color: "border-primary" },
-  { label: "Available Vehicles", value: "42", color: "border-success" },
-  { label: "Vehicles in Maintenance", value: "05", color: "border-warning" },
-  { label: "Active Trips", value: "18", color: "border-primary" },
-  { label: "Pending Trips", value: "09", color: "border-primary" },
-  { label: "Drivers on Duty", value: "26", color: "border-primary" },
-  { label: "Fleet Utilization", value: "81%", color: "border-success" },
-];
-
-const recentTrips = [
-  { trip: "TR001", vehicle: "VAN-05", driver: "Alex", status: "On Trip", badgeClass: "bg-primary text-primary-foreground", eta: "45 min" },
-  { trip: "TR002", vehicle: "TRK-12", driver: "John", status: "Completed", badgeClass: "bg-success text-white", eta: "—" },
-  { trip: "TR003", vehicle: "MINI-08", driver: "Priya", status: "Dispatched", badgeClass: "bg-primary/70 text-primary-foreground", eta: "1h 10m" },
-  { trip: "TR004", vehicle: "—", driver: "—", status: "Draft", badgeClass: "bg-panel-2 text-muted-foreground", eta: "Awaiting vehicle" },
-];
-
-const vehicleStatus = [
-  { label: "Available", color: "bg-success", width: "80%" },
-  { label: "On Trip", color: "bg-primary", width: "45%" },
-  { label: "In Shop", color: "bg-warning", width: "15%" },
-  { label: "Retired", color: "bg-destructive", width: "5%" },
-];
+import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
+import {
+  fetchDashboardMetrics,
+  fetchTrips,
+  fetchVehicles,
+  fetchDrivers,
+} from "@/lib/api/transitops";
 
 export function Overview() {
+  const { data: metrics, isLoading: isMetricsLoading } = useQuery({
+    queryKey: ["dashboardMetrics"],
+    queryFn: fetchDashboardMetrics,
+  });
+
+  const { data: trips, isLoading: isTripsLoading } = useQuery({
+    queryKey: ["trips"],
+    queryFn: fetchTrips,
+  });
+
+  const { data: vehicles, isLoading: isVehiclesLoading } = useQuery({
+    queryKey: ["vehicles"],
+    queryFn: fetchVehicles,
+  });
+
+  const { data: drivers } = useQuery({
+    queryKey: ["drivers"],
+    queryFn: fetchDrivers,
+  });
+
+  const vehicleMap = useMemo(() => {
+    const map: Record<number, string> = {};
+    vehicles?.forEach((v) => {
+      map[v.id] = `${v.model} (${v.registration_number})`;
+    });
+    return map;
+  }, [vehicles]);
+
+  const driverMap = useMemo(() => {
+    const map: Record<number, string> = {};
+    drivers?.forEach((d) => {
+      map[d.id] = d.name;
+    });
+    return map;
+  }, [drivers]);
+
+  const kpiCards = useMemo(() => {
+    if (!metrics) return [];
+    return [
+      { label: "Active Vehicles", value: String(metrics.active_vehicles), color: "border-primary" },
+      { label: "Available Vehicles", value: String(metrics.available_vehicles), color: "border-success" },
+      { label: "Vehicles in Maintenance", value: String(metrics.maintenance_vehicles), color: "border-warning" },
+      { label: "Active Trips", value: String(metrics.active_trips), color: "border-primary" },
+      { label: "Pending Trips", value: String(metrics.pending_trips), color: "border-primary" },
+      { label: "Drivers on Duty", value: String(metrics.drivers_on_duty), color: "border-primary" },
+      { label: "Fleet Utilization", value: `${metrics.fleet_utilization}%`, color: "border-success" },
+    ];
+  }, [metrics]);
+
+  const vehicleStatus = useMemo(() => {
+    if (!vehicles || vehicles.length === 0) {
+      return [
+        { label: "Available", color: "bg-success", width: "0%" },
+        { label: "On Trip", color: "bg-primary", width: "0%" },
+        { label: "In Shop", color: "bg-warning", width: "0%" },
+        { label: "Retired", color: "bg-destructive", width: "0%" },
+      ];
+    }
+    const total = vehicles.length;
+    const available = vehicles.filter((v) => v.status === "Available").length;
+    const onTrip = vehicles.filter((v) => v.status === "On Trip").length;
+    const inShop = vehicles.filter((v) => v.status === "In Shop").length;
+    const retired = vehicles.filter((v) => v.status === "Retired").length;
+
+    return [
+      { label: "Available", color: "bg-success", width: `${(available / total) * 100}%` },
+      { label: "On Trip", color: "bg-primary", width: `${(onTrip / total) * 100}%` },
+      { label: "In Shop", color: "bg-warning", width: `${(inShop / total) * 100}%` },
+      { label: "Retired", color: "bg-destructive", width: `${(retired / total) * 100}%` },
+    ];
+  }, [vehicles]);
+
+  const recentTrips = useMemo(() => {
+    if (!trips) return [];
+    // Sort by id descending and pick top 4
+    return [...trips]
+      .sort((a, b) => b.id - a.id)
+      .slice(0, 4)
+      .map((t) => {
+        let badgeClass = "bg-panel-2 text-muted-foreground";
+        if (t.status === "Dispatched") {
+          badgeClass = "bg-primary text-primary-foreground";
+        } else if (t.status === "Completed") {
+          badgeClass = "bg-success text-white";
+        } else if (t.status === "Cancelled") {
+          badgeClass = "bg-destructive text-destructive-foreground";
+        }
+        return {
+          trip: `TR-${String(t.id).padStart(3, "0")}`,
+          route: `${t.source} → ${t.destination}`,
+          vehicle: vehicleMap[t.vehicle_id] ?? `Vehicle #${t.vehicle_id}`,
+          driver: driverMap[t.driver_id] ?? `Driver #${t.driver_id}`,
+          status: t.status,
+          badgeClass,
+          eta: `${t.planned_distance} km`,
+        };
+      });
+  }, [trips, vehicleMap, driverMap]);
+
+  if (isMetricsLoading || isTripsLoading || isVehiclesLoading) {
+    return (
+      <div className="flex h-64 items-center justify-center p-8">
+        <p className="font-mono text-sm text-muted-foreground animate-pulse">Loading dashboard metrics…</p>
+      </div>
+    );
+  }
+
   return (
     <div className="p-8 space-y-8 font-sans text-[#0f172a]">
-      {/* Filters */}
-      <div className="flex flex-col gap-1 text-sm">
-        <label className="font-mono text-xs uppercase tracking-wider text-subtle">Filters</label>
-        <div className="flex flex-wrap gap-4">
-          <select className="cursor-pointer appearance-none rounded border border-border bg-transparent px-3 py-1.5 pr-8 text-muted-foreground focus:border-primary focus:outline-none">
-            <option>Vehicle Type: All</option>
-          </select>
-          <select className="cursor-pointer appearance-none rounded border border-border bg-transparent px-3 py-1.5 pr-8 text-muted-foreground focus:border-primary focus:outline-none">
-            <option>Status: All</option>
-          </select>
-          <select className="cursor-pointer appearance-none rounded border border-border bg-transparent px-3 py-1.5 pr-8 text-muted-foreground focus:border-primary focus:outline-none">
-            <option>Region: All</option>
-          </select>
-        </div>
-      </div>
-
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
         {kpiCards.map((card, idx) => (
@@ -63,26 +139,36 @@ export function Overview() {
               <thead>
                 <tr className="border-b border-border font-mono text-xs uppercase tracking-wider text-subtle">
                   <th className="px-4 py-3 font-medium">Trip</th>
+                  <th className="px-4 py-3 font-medium">Route</th>
                   <th className="px-4 py-3 font-medium">Vehicle</th>
                   <th className="px-4 py-3 font-medium">Driver</th>
                   <th className="px-4 py-3 font-medium">Status</th>
-                  <th className="px-4 py-3 font-medium">ETA</th>
+                  <th className="px-4 py-3 font-medium">Distance</th>
                 </tr>
               </thead>
               <tbody className="text-sm text-[#0f172a]">
-                {recentTrips.map((trip, idx) => (
-                  <tr key={idx} className="border-b border-[#1a1d24]">
-                    <td className="py-4">{trip.trip}</td>
-                    <td className="py-4">{trip.vehicle}</td>
-                    <td className="py-4">{trip.driver}</td>
-                    <td className="py-4">
-                      <span className={`inline-block px-3 py-1 rounded-md text-xs font-medium ${trip.badgeClass}`}>
-                        {trip.status}
-                      </span>
+                {recentTrips.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground font-mono text-xs">
+                      No recent trips found.
                     </td>
-                    <td className="px-4 py-4 text-muted-foreground">{trip.eta}</td>
                   </tr>
-                ))}
+                ) : (
+                  recentTrips.map((trip, idx) => (
+                    <tr key={idx} className="border-b border-border/50 last:border-none">
+                      <td className="px-4 py-4 font-mono font-medium text-blue-600">{trip.trip}</td>
+                      <td className="px-4 py-4">{trip.route}</td>
+                      <td className="px-4 py-4">{trip.vehicle}</td>
+                      <td className="px-4 py-4">{trip.driver}</td>
+                      <td className="px-4 py-4">
+                        <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium ${trip.badgeClass}`}>
+                          {trip.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 text-muted-foreground">{trip.eta}</td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

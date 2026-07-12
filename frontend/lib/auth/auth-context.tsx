@@ -11,9 +11,13 @@ import {
   type ReactNode,
 } from "react";
 
-import type { AuthUser, LoginRequest, RoleName } from "@/types/auth";
+import type { AuthUser, LoginRequest } from "@/types/auth";
+import { loginRequest } from "@/lib/api/auth";
+import { setAccessToken } from "@/lib/auth/access-token-store";
+import { setSessionCookie, clearSessionCookie } from "@/lib/auth/session-cookie";
 
 const STORAGE_KEY = "transitops.session";
+const TOKEN_KEY = "transitops.access_token";
 
 interface AuthContextValue {
   user: AuthUser | null;
@@ -24,27 +28,6 @@ interface AuthContextValue {
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
-
-function nameFromEmail(email: string): string {
-  const local = email.split("@")[0] ?? "user";
-  return local
-    .split(/[.\-_]/)
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ") || "Fleet User";
-}
-
-function buildMockUser(email: string, role: RoleName = "Dispatcher"): AuthUser {
-  return {
-    id: "local-user",
-    organization_id: "local-org",
-    full_name: nameFromEmail(email),
-    email,
-    is_active: true,
-    last_login: new Date().toISOString(),
-    role: { id: `role-${role.toLowerCase().replace(/\s+/g, "-")}`, name: role },
-  };
-}
 
 function readStoredUser(): AuthUser | null {
   if (typeof window === "undefined") {
@@ -69,21 +52,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Reading localStorage must happen client-side only (SSR has no
     // window), so this intentionally hydrates session state in an effect
     // rather than a lazy useState initializer, to avoid a hydration mismatch.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setUser(readStoredUser());
+    const storedUser = readStoredUser();
+    if (storedUser) {
+      setUser(storedUser);
+      const token = window.localStorage.getItem(TOKEN_KEY);
+      if (token) {
+        setAccessToken(token);
+        setSessionCookie();
+      }
+    }
     setIsInitializing(false);
   }, []);
 
   const login = useCallback(async (payload: LoginRequest) => {
-    // No backend in this build — any well-formed credentials sign in locally.
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    const mockUser = buildMockUser(payload.email, payload.role);
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(mockUser));
-    setUser(mockUser);
+    const response = await loginRequest({
+      email: payload.email,
+      password: payload.password,
+    });
+
+    const apiUser = response.user;
+    const access_token = response.access_token;
+
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(apiUser));
+    window.localStorage.setItem(TOKEN_KEY, access_token);
+    
+    setAccessToken(access_token);
+    setSessionCookie();
+    setUser(apiUser);
   }, []);
 
   const logout = useCallback(() => {
     window.localStorage.removeItem(STORAGE_KEY);
+    window.localStorage.removeItem(TOKEN_KEY);
+    setAccessToken(null);
+    clearSessionCookie();
     setUser(null);
     router.push("/");
   }, [router]);

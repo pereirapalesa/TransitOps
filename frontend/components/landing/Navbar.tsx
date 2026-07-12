@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { Menu, Truck, X, Moon } from "lucide-react";
 import { useState } from "react";
@@ -14,7 +16,6 @@ export default function Navbar() {
     { name: "Contact", href: "/#contact" },
   ];
 
-export default function Navbar() {
   return (
     <header className="w-full border-b border-border bg-panel">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6 lg:px-10">

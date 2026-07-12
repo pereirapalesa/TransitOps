@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
-/* =========================
-   Light Theme
+/* ========================= */
+   /* Light Theme */
 
 :root {
   /* Light theme */
@@ -15,8 +15,8 @@
   --primary-hover: #1d4ed8;
 }
 
-/* =========================
-   Dark Theme
+/* ========================= */
+   /* Dark Theme */
 
 .dark {
   --background: #020617; /* slate-950 */

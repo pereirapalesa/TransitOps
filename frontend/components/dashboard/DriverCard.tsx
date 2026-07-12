@@ -33,8 +33,8 @@ export function DriverCard({
   onDelete,
 }: {
   driver: Driver;
-  onEdit: () => void;
-  onDelete: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }) {
   return (
     <Card className="flex flex-col gap-4 p-5 shadow-none">
@@ -69,15 +69,21 @@ export function DriverCard({
         </div>
       </div>
 
-      <div className="flex items-center gap-2 border-t border-border pt-4">
-        <Button variant="outline" size="sm" className="flex-1" onClick={onEdit}>
-          <Pencil className="h-3.5 w-3.5" />
-          Edit
-        </Button>
-        <Button variant="ghost" size="sm" className="text-destructive hover:bg-destructive/10" onClick={onDelete}>
-          <Trash2 className="h-3.5 w-3.5" />
-        </Button>
-      </div>
+      {(onEdit || onDelete) && (
+        <div className="flex items-center gap-2 border-t border-border pt-4">
+          {onEdit && (
+            <Button variant="outline" size="sm" className="flex-1" onClick={onEdit}>
+              <Pencil className="h-3.5 w-3.5" />
+              Edit
+            </Button>
+          )}
+          {onDelete && (
+            <Button variant="ghost" size="sm" className="text-destructive hover:bg-destructive/10" onClick={onDelete}>
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          )}
+        </div>
+      )}
     </Card>
   );
 }

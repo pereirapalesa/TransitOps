@@ -12,6 +12,7 @@ import {
   BarChart3,
   Settings,
 } from "lucide-react";
+import { useAuth } from "@/lib/auth/auth-context";
 
 const navItems = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -24,8 +25,21 @@ const navItems = [
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
+const roleNavMap: Record<string, string[]> = {
+  "Fleet Manager": ["Dashboard", "Fleet", "Drivers", "Trips", "Maintenance", "Fuel & Expenses", "Analytics", "Settings"],
+  "Admin": ["Dashboard", "Fleet", "Drivers", "Trips", "Maintenance", "Fuel & Expenses", "Analytics", "Settings"],
+  "Financial Analyst": ["Dashboard", "Fuel & Expenses", "Analytics", "Settings"],
+  "Driver": ["Dashboard", "Trips", "Settings"],
+  "Safety Officer": ["Dashboard", "Drivers", "Settings"],
+};
+
 export function Sidebar() {
   const pathname = usePathname();
+  const { user } = useAuth();
+
+  const roleName = user?.role?.name ?? "Driver";
+  const allowedNames = roleNavMap[roleName] ?? ["Dashboard", "Settings"];
+  const visibleItems = navItems.filter((item) => allowedNames.includes(item.name));
 
   return (
     <aside className="hidden h-full w-64 shrink-0 flex-col border-r border-border bg-panel font-sans md:flex">
@@ -46,7 +60,7 @@ export function Sidebar() {
 
       <nav className="flex-1 overflow-y-auto py-4">
         <ul className="space-y-0.5 px-3">
-          {navItems.map((item) => {
+          {visibleItems.map((item) => {
             const isActive = pathname === item.href;
             const Icon = item.icon;
             return (

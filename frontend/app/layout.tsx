@@ -6,8 +6,6 @@ import { QueryProvider } from "@/components/providers/query-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { AuthProvider } from "@/lib/auth/auth-context";
 
-import { ThemeProvider } from "@/components/providers/theme-provider";
-
 import "./globals.css";
 
 const sans = IBM_Plex_Sans({

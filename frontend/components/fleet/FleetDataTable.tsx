@@ -4,7 +4,7 @@ import { Vehicle, SortColumn, SortDirection } from "@/types/vehicle";
 import VehicleStatusBadge from "./VehicleStatusBadge";
 
 interface Props {
-  vehicles: Vehicle[];
+  vehicles: (Vehicle & { dbId: number })[];
   sortColumn: SortColumn;
   sortDirection: SortDirection;
   onSort: (column: SortColumn) => void;
@@ -12,6 +12,9 @@ interface Props {
   pageSize: number;
   total: number;
   onPageChange: (page: number) => void;
+  onEdit?: (vehicle: Vehicle & { dbId: number }) => void;
+  onDelete?: (vehicle: Vehicle & { dbId: number }) => void;
+  showActions?: boolean;
 }
 
 function SortIcon({
@@ -40,16 +43,6 @@ function formatDate(dateStr: string): string {
   return `${String(d.getUTCDate()).padStart(2, "0")} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
 }
 
-const COLUMNS: { key: SortColumn | null; label: string }[] = [
-  { key: "vehicle_number", label: "Vehicle No." },
-  { key: "type", label: "Type" },
-  { key: null, label: "Driver" },
-  { key: "status", label: "Status" },
-  { key: "last_trip_date", label: "Last Trip" },
-  { key: "mileage", label: "Mileage (km)" },
-  { key: null, label: "Actions" },
-];
-
 export default function FleetDataTable({
   vehicles,
   sortColumn,
@@ -59,10 +52,24 @@ export default function FleetDataTable({
   pageSize,
   total,
   onPageChange,
+  onEdit,
+  onDelete,
+  showActions = false,
 }: Props) {
   const totalPages = Math.ceil(total / pageSize);
-  const start = (page - 1) * pageSize + 1;
+  const start = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const end = Math.min(page * pageSize, total);
+
+  const columns = [
+    { key: "vehicle_number" as SortColumn, label: "Vehicle No." },
+    { key: "type" as SortColumn, label: "Type" },
+    { key: "status" as SortColumn, label: "Status" },
+    { key: "mileage" as SortColumn, label: "Mileage (km)" },
+  ];
+
+  if (showActions) {
+    columns.push({ key: null as any, label: "Actions" });
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -71,7 +78,7 @@ export default function FleetDataTable({
         <table className="min-w-full divide-y divide-gray-100 text-sm">
           <thead className="bg-gray-50 text-xs uppercase tracking-wider text-gray-500">
             <tr>
-              {COLUMNS.map((col) => (
+              {columns.map((col) => (
                 <th
                   key={col.label}
                   onClick={() => col.key && onSort(col.key)}
@@ -95,7 +102,7 @@ export default function FleetDataTable({
           <tbody className="divide-y divide-gray-50">
             {vehicles.length === 0 ? (
               <tr>
-                <td colSpan={7} className="py-12 text-center text-gray-400">
+                <td colSpan={showActions ? 5 : 4} className="py-12 text-center text-gray-400">
                   No vehicles found. Try adjusting your filters.
                 </td>
               </tr>
@@ -110,45 +117,36 @@ export default function FleetDataTable({
                     <div className="text-xs text-gray-400">{vehicle.plate_number}</div>
                   </td>
                   <td className="px-4 py-3 text-gray-700">{vehicle.type}</td>
-                  <td className="px-4 py-3 text-gray-700">
-                    {vehicle.driver_name ?? (
-                      <span className="text-gray-400 italic">Unassigned</span>
-                    )}
-                  </td>
                   <td className="px-4 py-3">
                     <VehicleStatusBadge status={vehicle.status} />
-                  </td>
-                  <td className="px-4 py-3 text-gray-600">
-                    {vehicle.last_trip_date
-                      ? formatDate(vehicle.last_trip_date)
-                      : <span className="text-gray-400">—</span>}
                   </td>
                   <td className="px-4 py-3 text-gray-700">
                     {vehicle.mileage.toLocaleString()}
                   </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <button
-                        title="View"
-                        onClick={() => alert(`Viewing vehicle ${vehicle.vehicle_number}`)}
-                        className="rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-blue-600 transition-colors"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                      </button>
-                      <button
-                        title="Edit"
-                        onClick={() => alert(`Editing vehicle ${vehicle.vehicle_number}`)}
-                        className="rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-emerald-600 transition-colors"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 0 1 2.828 0l.172.172a2 2 0 0 1 0 2.828L12 16H9v-3z" />
-                        </svg>
-                      </button>
-                    </div>
-                  </td>
+                  {showActions && (
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <button
+                          title="Edit"
+                          onClick={() => onEdit?.(vehicle)}
+                          className="rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-emerald-600 transition-colors"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 0 1 2.828 0l.172.172a2 2 0 0 1 0 2.828L12 16H9v-3z" />
+                          </svg>
+                        </button>
+                        <button
+                          title="Delete"
+                          onClick={() => onDelete?.(vehicle)}
+                          className="rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-destructive transition-colors"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))
             )}

@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.deps import get_db, get_current_user
+from app.deps import get_db, get_current_user, RoleChecker
+from app.enums import Roles
 from app.models.user import User
 from app.schemas.maintenance import MaintenanceCreate, MaintenanceResponse
 import app.services.maintenance as maint_service
@@ -15,7 +16,7 @@ router = APIRouter(
 def create_maintenance(
     data: MaintenanceCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(RoleChecker([Roles.Fleet_Manager])),
 ):
     """
     Create a new maintenance record for a vehicle. Updates vehicle status to In Shop.
@@ -53,7 +54,7 @@ def get_maintenance(
 def complete_maintenance(
     maintenance_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(RoleChecker([Roles.Fleet_Manager])),
 ):
     """
     Complete an open maintenance log. Updates vehicle status back to Available.

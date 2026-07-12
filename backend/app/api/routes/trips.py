@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.deps import get_db, get_current_user
+from app.deps import get_db, get_current_user, RoleChecker
+from app.enums import Roles
 from app.models.user import User
 from app.schemas.trip import (
     TripCreate,
@@ -21,7 +22,7 @@ router = APIRouter(
 def create_trip(
     data: TripCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(RoleChecker([Roles.Fleet_Manager])),
 ):
     """
     Create a new trip in Draft status.
@@ -63,7 +64,7 @@ def update_trip(
     trip_id: int,
     data: TripUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(RoleChecker([Roles.Fleet_Manager])),
 ):
     """
     Update an existing trip (only allowed in Draft status).
@@ -75,7 +76,7 @@ def update_trip(
 def delete_trip(
     trip_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(RoleChecker([Roles.Fleet_Manager])),
 ):
     """
     Delete a trip.
@@ -88,7 +89,7 @@ def delete_trip(
 def dispatch_trip(
     trip_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(RoleChecker([Roles.Fleet_Manager])),
 ):
     """
     Dispatch a trip in Draft status. Updates vehicle and driver status to On Trip.
@@ -101,7 +102,7 @@ def complete_trip(
     trip_id: int,
     data: TripComplete,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(RoleChecker([Roles.Fleet_Manager])),
 ):
     """
     Complete a dispatched trip. Updates vehicle and driver status back to Available.
@@ -113,7 +114,7 @@ def complete_trip(
 def cancel_trip(
     trip_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(RoleChecker([Roles.Fleet_Manager])),
 ):
     """
     Cancel a trip (if dispatched, restores vehicle and driver statuses to Available).
