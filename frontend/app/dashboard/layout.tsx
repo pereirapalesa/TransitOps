@@ -5,7 +5,7 @@ import Navbar from "@/components/landing/Navbar";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-[#0a0a0a] text-white">
+  <div className="flex flex-col h-screen overflow-hidden bg-[#ffffff]  text-black">
       <Navbar />
       <div className="flex flex-1 overflow-hidden pt-20">
         <Sidebar />
